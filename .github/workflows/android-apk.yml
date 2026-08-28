@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
       - feat/wasm-branding
 
 jobs:
@@ -24,8 +23,14 @@ jobs:
           test -f package.json
           test -d src
           test -d public
-          test -f public/assets/branding/wasm_app_icon.png
-          test -f public/assets/branding/wasm_splash.png
+
+      - name: Restore official WASM source images byte-for-byte
+        run: |
+          mkdir -p public/assets/branding
+          cat branding_upload/icon.part*.b64 | tr -d '\r\n' | base64 --decode > public/assets/branding/wasm_app_icon.png
+          cat branding_upload/splash.part*.b64 | tr -d '\r\n' | base64 --decode > public/assets/branding/wasm_splash.png
+          echo "e31d2d96c7465771fd02853455fdf626768ea9e5b7ae32331c93e15da11222ef  public/assets/branding/wasm_app_icon.png" | sha256sum -c -
+          echo "58b1ccc43e4b6594862e78266b09e0bac928a6b2eeac1ccb7121f7b34de68598  public/assets/branding/wasm_splash.png" | sha256sum -c -
 
       - name: Apply WASM visual identity only
         run: python3 scripts/apply_source_branding.py
@@ -34,6 +39,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -53,11 +59,11 @@ jobs:
       - name: Generate Web and PWA branding assets
         run: python3 scripts/generate_branding_assets.py
 
-      - name: Verify official sources and responsive splash math
+      - name: Verify official branding and responsive splash
         run: python3 scripts/verify_branding.py
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: TypeScript lint/typecheck
         run: npm run lint
@@ -73,7 +79,7 @@ jobs:
       - name: Sync Web build into Android
         run: npx cap sync android
 
-      - name: Generate Android launcher, adaptive icons and splash theme
+      - name: Generate Android WASM resources
         run: python3 scripts/generate_branding_assets.py --android-dir android
 
       - name: Verify Android WASM resources
@@ -81,6 +87,7 @@ jobs:
           grep -q 'وَسْم' android/app/src/main/res/values/strings.xml
           grep -q 'wasm_brand_dark' android/app/src/main/res/values/styles.xml
           grep -q 'windowSplashScreenAnimatedIcon' android/app/src/main/res/values-v31/styles.xml
+          grep -q 'core-splashscreen' android/app/build.gradle
           test -f android/app/src/main/res/mipmap-mdpi/ic_launcher.png
           test -f android/app/src/main/res/mipmap-hdpi/ic_launcher.png
           test -f android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
