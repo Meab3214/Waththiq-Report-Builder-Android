@@ -25,6 +25,35 @@ def validate_sources() -> None:
     if sha256(SPLASH_SOURCE) != EXPECTED_SPLASH_SHA256:
         raise SystemExit("wasm_splash.png does not match the approved official source")
 
+def transparent_corner_background(src: Image.Image) -> Image.Image:
+    """Remove only the neutral-black area connected to the outer corners.
+
+    The approved icon artwork itself remains unchanged; this derived alpha mask
+    prevents its rectangular JPEG corner background from showing inside Android
+    adaptive/squircle/circular masks.
+    """
+    rgba = src.convert("RGBA")
+    px = rgba.load()
+    width, height = rgba.size
+    seen: set[tuple[int, int]] = set()
+    stack = [(0, 0), (width - 1, 0), (0, height - 1), (width - 1, height - 1)]
+
+    def is_outer_black(x: int, y: int) -> bool:
+        r, g, b, _ = px[x, y]
+        return max(r, g, b) <= 24 and (max(r, g, b) - min(r, g, b)) <= 9
+
+    while stack:
+        x, y = stack.pop()
+        if (x, y) in seen or not (0 <= x < width and 0 <= y < height):
+            continue
+        if not is_outer_black(x, y):
+            continue
+        seen.add((x, y))
+        r, g, b, _ = px[x, y]
+        px[x, y] = (r, g, b, 0)
+        stack.extend(((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)))
+    return rgba
+
 def resize_square(src: Image.Image, size: int, dst: Path) -> None:
     dst.parent.mkdir(parents=True, exist_ok=True)
     src.resize((size, size), Image.Resampling.LANCZOS).save(dst, "PNG", optimize=True)
@@ -32,7 +61,7 @@ def resize_square(src: Image.Image, size: int, dst: Path) -> None:
 def generate_web() -> None:
     validate_sources()
     ICONS_DIR.mkdir(parents=True, exist_ok=True)
-    icon = Image.open(ICON_SOURCE).convert("RGBA")
+    icon = transparent_corner_background(Image.open(ICON_SOURCE))
     for size in (16, 32, 48, 180, 192, 256, 384, 512):
         resize_square(icon, size, ICONS_DIR / f"icon-{size}.png")
     icon.resize((48, 48), Image.Resampling.LANCZOS).save(
