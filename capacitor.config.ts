@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.waththiq.reports',
-  appName: 'Waththiq',
+  appName: 'وَسْم',
   webDir: 'dist'
 };
 
