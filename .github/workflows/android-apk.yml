@@ -4,13 +4,14 @@ on:
   workflow_dispatch:
   push:
     branches:
+      - main
       - feat/wasm-branding
 
 jobs:
   build-apk:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
 
     steps:
       - name: Checkout
@@ -24,23 +25,12 @@ jobs:
           test -d src
           test -d public
 
-      - name: Restore official WASM source images byte-for-byte
+      - name: Verify official WASM source images
         run: |
-          mkdir -p public/assets/branding
-          cat branding_upload/icon.part*.b64 | tr -d '\r\n' | base64 --decode > public/assets/branding/wasm_app_icon.png
-          cat branding_upload/splash.part*.b64 | tr -d '\r\n' | base64 --decode > public/assets/branding/wasm_splash.png
+          test -f public/assets/branding/wasm_app_icon.png
+          test -f public/assets/branding/wasm_splash.png
           echo "e31d2d96c7465771fd02853455fdf626768ea9e5b7ae32331c93e15da11222ef  public/assets/branding/wasm_app_icon.png" | sha256sum -c -
           echo "58b1ccc43e4b6594862e78266b09e0bac928a6b2eeac1ccb7121f7b34de68598  public/assets/branding/wasm_splash.png" | sha256sum -c -
-
-      - name: Persist official WASM source images in GitHub
-        run: |
-          if [ -n "$(git status --porcelain -- public/assets/branding)" ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add public/assets/branding/wasm_app_icon.png public/assets/branding/wasm_splash.png
-            git commit -m "feat: store official WASM branding assets [skip ci]"
-            git push origin HEAD:feat/wasm-branding
-          fi
 
       - name: Apply WASM visual identity only
         run: python3 scripts/apply_source_branding.py
