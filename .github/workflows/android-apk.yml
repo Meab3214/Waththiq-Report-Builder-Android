@@ -39,7 +39,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -63,7 +62,7 @@ jobs:
         run: python3 scripts/verify_branding.py
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: TypeScript lint/typecheck
         run: npm run lint
