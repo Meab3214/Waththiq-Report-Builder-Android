@@ -15,11 +15,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Restore exact uploaded source
+        run: |
+          cat bundle.part01.b64 bundle.part02.b64 bundle.part03.b64 | base64 --decode > /tmp/waththiq-source.tar.xz
+          tar -xJf /tmp/waththiq-source.tar.xz
+          test -f package.json
+          test -d src
+          test -d public
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -34,15 +41,15 @@ jobs:
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
-      - name: Build web app
+      - name: Build exact web interface
         run: npm run build
 
       - name: Create Android project
         run: npx cap add android
 
-      - name: Sync Capacitor Android
+      - name: Sync web build into Android
         run: npx cap sync android
 
       - name: Build debug APK
@@ -60,3 +67,4 @@ jobs:
           name: Waththiq-Report-Builder-Android-APK
           path: Waththiq-Report-Builder-Android.apk
           if-no-files-found: error
+          retention-days: 30
