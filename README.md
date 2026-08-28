@@ -1,9 +1,15 @@
-# Waththiq Report Builder Android
+# وَسْم — صانع التقارير
 
-مشروع Android مستقل لتطبيق «وثق - صانع التقارير والفعاليات الاحترافي».
+**إنجازك في تقرير يليق بأثره**
 
-- App ID: `com.waththiq.reports`
+الهوية الرسمية لتطبيق وَسْم مطبقة على مشروع React + Vite + PWA وتغليف Android بواسطة Capacitor.
+
+- App ID (محفوظ للتوافق مع بيانات المستخدم): `com.waththiq.reports`
 - Android wrapper: Capacitor
 - Frontend: React + Vite
+- PWA: Manifest + Service Worker
 - RTL / Arabic
-- GitHub Actions workflow: `.github/workflows/android-apk.yml`
+- Official branding assets: `public/assets/branding/`
+- Branding build script: `scripts/generate_branding_assets.py`
+
+> يتم الاحتفاظ بمعرّف Android ومفتاح التخزين المحلي القديم دون تغيير لحماية بيانات المستخدم الحالية واستمرارية التحديثات.
