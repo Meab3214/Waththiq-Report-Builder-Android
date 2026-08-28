@@ -175,6 +175,20 @@ public class MainActivity extends BridgeActivity {
 }
 """)
 
+    # Android 12+ splash compatibility. Capacitor does not add this dependency
+    # unless the splash plugin is installed, so add only the AndroidX primitive
+    # required by the official launch theme.
+    app_gradle = android_dir / "app" / "build.gradle"
+    gradle_text = app_gradle.read_text(encoding="utf-8")
+    splash_dependency = "implementation 'androidx.core:core-splashscreen:1.0.1'"
+    if splash_dependency not in gradle_text:
+        gradle_text = gradle_text.replace(
+            "dependencies {",
+            "dependencies {\n    " + splash_dependency,
+            1,
+        )
+        app_gradle.write_text(gradle_text, encoding="utf-8")
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--android-dir", type=Path, default=None)
