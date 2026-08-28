@@ -309,6 +309,13 @@ export default config;
 ''', encoding="utf-8")
 
 server = ROOT / "server.ts"
-server.write_text(server.read_text(encoding="utf-8").replace("Waththiq Report Platform running on", "WASM Report Platform running on"), encoding="utf-8")
+if server.exists():
+    server.write_text(
+        server.read_text(encoding="utf-8").replace(
+            "Waththiq Report Platform running on",
+            "WASM Report Platform running on",
+        ),
+        encoding="utf-8",
+    )
 
 print("WASM source branding applied without changing storage/database/API logic.")
