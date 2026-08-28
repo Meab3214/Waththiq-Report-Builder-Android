@@ -1,0 +1,6 @@
+{
+  "name": "Waththiq - School Activity Report Generator",
+  "description": "منصة وثق لإنشاء وتصميم وتوثيق التقارير المدرسية والأنشطة التعليمية والصحية بـ 5 قوالب احترافية مطابقة لهوية وزارة التعليم",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
