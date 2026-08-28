@@ -1,9 +1,11 @@
-name: Build Android APK
+name: Build WASM Android APK
 
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - feat/wasm-branding
 
 jobs:
   build-apk:
@@ -15,13 +17,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Restore exact uploaded source
+      - name: Restore original AI Studio source
         run: |
           cat bundle.part01.b64 bundle.part02.b64 bundle.part03.b64 | base64 --decode > /tmp/waththiq-source.tar.xz
           tar -xJf /tmp/waththiq-source.tar.xz
           test -f package.json
           test -d src
           test -d public
+          test -f public/assets/branding/wasm_app_icon.png
+          test -f public/assets/branding/wasm_splash.png
+
+      - name: Apply WASM visual identity only
+        run: python3 scripts/apply_source_branding.py
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -40,50 +47,46 @@ jobs:
       - name: Install Android SDK 36
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
+      - name: Install branding image tool
+        run: python3 -m pip install --disable-pip-version-check --no-cache-dir Pillow==11.3.0
+
+      - name: Generate Web and PWA branding assets
+        run: python3 scripts/generate_branding_assets.py
+
+      - name: Verify official sources and responsive splash math
+        run: python3 scripts/verify_branding.py
+
       - name: Install dependencies
         run: npm install
 
-      - name: Build exact web interface
+      - name: TypeScript lint/typecheck
+        run: npm run lint
+
+      - name: Build Web application
         run: npm run build
 
-      - name: Create Android project
-        run: npx cap add android
+      - name: Create clean Android wrapper
+        run: |
+          rm -rf android
+          npx cap add android
 
-      - name: Sync web build into Android
+      - name: Sync Web build into Android
         run: npx cap sync android
 
-      - name: Keep app controls above Android navigation bar
+      - name: Generate Android launcher, adaptive icons and splash theme
+        run: python3 scripts/generate_branding_assets.py --android-dir android
+
+      - name: Verify Android WASM resources
         run: |
-          cat > android/app/src/main/java/com/waththiq/reports/MainActivity.java <<'JAVA'
-          package com.waththiq.reports;
-
-          import android.os.Bundle;
-          import android.view.View;
-          import androidx.core.graphics.Insets;
-          import androidx.core.view.ViewCompat;
-          import androidx.core.view.WindowInsetsCompat;
-          import com.getcapacitor.BridgeActivity;
-
-          public class MainActivity extends BridgeActivity {
-              @Override
-              public void onCreate(Bundle savedInstanceState) {
-                  super.onCreate(savedInstanceState);
-
-                  View webView = getBridge().getWebView();
-                  ViewCompat.setOnApplyWindowInsetsListener(webView, (view, windowInsets) -> {
-                      Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
-                      view.setPadding(
-                          view.getPaddingLeft(),
-                          view.getPaddingTop(),
-                          view.getPaddingRight(),
-                          systemBars.bottom
-                      );
-                      return windowInsets;
-                  });
-                  ViewCompat.requestApplyInsets(webView);
-              }
-          }
-          JAVA
+          grep -q 'وَسْم' android/app/src/main/res/values/strings.xml
+          grep -q 'wasm_brand_dark' android/app/src/main/res/values/styles.xml
+          grep -q 'windowSplashScreenAnimatedIcon' android/app/src/main/res/values-v31/styles.xml
+          test -f android/app/src/main/res/mipmap-mdpi/ic_launcher.png
+          test -f android/app/src/main/res/mipmap-hdpi/ic_launcher.png
+          test -f android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
+          test -f android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+          test -f android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+          test -f android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png
 
       - name: Build debug APK
         working-directory: android
@@ -92,12 +95,12 @@ jobs:
           ./gradlew assembleDebug --stacktrace
 
       - name: Rename APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk Waththiq-Report-Builder-Android.apk
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk WASM-Android-Debug.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Waththiq-Report-Builder-Android-APK
-          path: Waththiq-Report-Builder-Android.apk
+          name: WASM-Android-APK
+          path: WASM-Android-Debug.apk
           if-no-files-found: error
           retention-days: 30
