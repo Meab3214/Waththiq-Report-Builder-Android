@@ -35,6 +35,34 @@ jobs:
           grep -q 'renderExactA4DataUrl' src/App.tsx
           grep -q 'max-w-md max-h' src/App.tsx
           grep -q 'height:calc(100dvh - 64px)' src/index.css
+      - name: Verify Gemini backend health and JSON generation
+        run: |
+          set -euo pipefail
+          BASE='https://wasm-ai-prod-bandrbk6-3214.vercel.app'
+          HEALTH=''
+          for i in $(seq 1 12); do
+            HEALTH="$(curl -L --connect-timeout 8 --max-time 20 -sS -w '\nHTTP_STATUS:%{http_code}\nCONTENT_TYPE:%{content_type}\n' "$BASE/api/health" || true)"
+            echo "$HEALTH"
+            BODY="$(printf '%s' "$HEALTH" | sed '/^HTTP_STATUS:/,$d')"
+            STATUS="$(printf '%s' "$HEALTH" | sed -n 's/^HTTP_STATUS://p' | tail -1)"
+            CTYPE="$(printf '%s' "$HEALTH" | sed -n 's/^CONTENT_TYPE://p' | tail -1)"
+            if [ "$STATUS" = '200' ] && printf '%s' "$CTYPE" | grep -qi 'application/json' && printf '%s' "$BODY" | grep -q '"ok":true'; then
+              break
+            fi
+            sleep 5
+          done
+          [ "$STATUS" = '200' ]
+          printf '%s' "$CTYPE" | grep -qi 'application/json'
+          printf '%s' "$BODY" | grep -q '"ok":true'
+          AI="$(curl -L --connect-timeout 8 --max-time 60 -sS -w '\nHTTP_STATUS:%{http_code}\nCONTENT_TYPE:%{content_type}\n' -H 'Content-Type: application/json' -d '{"title":"برنامج تجريبي","reportType":"برنامج","targetAudience":"الطلاب"}' "$BASE/api/ai/generate-content")"
+          echo "$AI"
+          AI_BODY="$(printf '%s' "$AI" | sed '/^HTTP_STATUS:/,$d')"
+          AI_STATUS="$(printf '%s' "$AI" | sed -n 's/^HTTP_STATUS://p' | tail -1)"
+          AI_CTYPE="$(printf '%s' "$AI" | sed -n 's/^CONTENT_TYPE://p' | tail -1)"
+          [ "$AI_STATUS" = '200' ]
+          printf '%s' "$AI_CTYPE" | grep -qi 'application/json'
+          printf '%s' "$AI_BODY" | grep -q '"success":true'
+          printf '%s' "$AI_BODY" | grep -q '"generalGoal"'
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - uses: actions/setup-java@v4
@@ -67,10 +95,12 @@ jobs:
           python3 scripts/apply_android_native_v4.py
           python3 scripts/apply_android_native_v5.py
           python3 scripts/apply_android_native_v6.py
+          python3 scripts/apply_android_native_v8.py
           python3 scripts/fix_build_issues.py --android
           grep -q 'startFile(PluginCall call)' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
           grep -q 'appendFileChunk(PluginCall call)' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
           grep -q 'finishFile(PluginCall call)' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
+          grep -q 'wasm-ai-prod-bandrbk6-3214.vercel.app' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
           grep -q 'signingConfig signingConfigs.release' android/app/build.gradle
       - name: Build signed APK
         working-directory: android
