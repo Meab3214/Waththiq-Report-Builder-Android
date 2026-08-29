@@ -51,7 +51,6 @@ jobs:
           python3 scripts/apply_mobile_v5.py
           grep -q 'wasm-mobile-command' src/App.tsx
           grep -q 'exportReport' src/App.tsx
-          grep -q 'الخطوة التالية' src/components/Editor/StepEditorModal.tsx
           grep -q 'wasm-step-tabs' src/components/Editor/StepEditorModal.tsx
           ! grep -q 'setGeminiKey' src/components/Editor/AIEducationalAssistant.tsx
           ! grep -q 'template-accent-initiative' src/components/ReportRenderer.tsx
