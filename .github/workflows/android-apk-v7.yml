@@ -30,9 +30,10 @@ jobs:
           python3 scripts/fix_mobile_v5_types.py
           python3 scripts/apply_mobile_v6.py
           python3 scripts/apply_mobile_v8.py
+          python3 scripts/fix_mobile_v8.py
           grep -q 'حفظ وتطبيق على التقرير' src/App.tsx
           grep -q 'renderExactA4DataUrl' src/App.tsx
-          grep -q 'appearanceDraftColor' src/App.tsx
+          grep -q 'max-w-md max-h' src/App.tsx
           grep -q 'height:calc(100dvh - 64px)' src/index.css
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
