@@ -1,0 +1,79 @@
+name: Build WASM Android v7
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+concurrency:
+  group: wasm-android-v7
+  cancel-in-progress: true
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore source
+        run: |
+          cat bundle.part01.b64 bundle.part02.b64 bundle.part03.b64 | base64 --decode > /tmp/source.tar.xz
+          tar -xJf /tmp/source.tar.xz
+      - name: Apply WASM patches
+        run: |
+          python3 scripts/apply_source_branding.py
+          python3 scripts/apply_modal_flow.py
+          python3 scripts/apply_android_mobile_fixes.py
+          python3 scripts/fix_build_issues.py --source
+          python3 scripts/apply_mobile_v2.py
+          python3 scripts/apply_mobile_v3.py
+          python3 scripts/apply_mobile_v4.py
+          python3 scripts/apply_mobile_v5.py
+          python3 scripts/fix_mobile_v5_types.py
+          python3 scripts/apply_mobile_v6.py
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '21'}
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - run: python3 -m pip install --disable-pip-version-check --no-cache-dir Pillow==11.3.0
+      - name: Generate branding
+        run: |
+          python3 scripts/generate_branding_assets.py
+          python3 scripts/generate_developer_mark.py
+          python3 scripts/verify_branding.py
+      - run: npm install
+      - name: Typecheck
+        run: npm run lint
+      - name: Build web
+        run: npm run build
+      - name: Create Android
+        run: |
+          rm -rf android
+          npx cap add android
+          npx cap sync android
+          python3 scripts/generate_branding_assets.py --android-dir android
+          base64 --decode signing/wasm-release.jks.b64 > android/wasm-release.jks
+      - name: Apply native patches
+        run: |
+          python3 scripts/apply_android_native.py
+          python3 scripts/apply_android_native_v2.py
+          python3 scripts/apply_android_native_v3.py
+          python3 scripts/apply_android_native_v4.py
+          python3 scripts/apply_android_native_v5.py
+          python3 scripts/apply_android_native_v6.py
+          python3 scripts/fix_build_issues.py --android
+          grep -q 'exportReport(PluginCall call)' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
+          grep -q 'wasm-ai-service-bandrbk6-3214.vercel.app' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
+          grep -q 'signingConfig signingConfigs.release' android/app/build.gradle
+      - name: Build signed APK
+        working-directory: android
+        run: chmod +x gradlew && ./gradlew assembleRelease --stacktrace
+      - name: Verify signature
+        run: $ANDROID_HOME/build-tools/36.0.0/apksigner verify --verbose android/app/build/outputs/apk/release/app-release.apk
+      - name: Package
+        run: cp android/app/build/outputs/apk/release/app-release.apk WASM-Android-Mobile-v7-Release.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WASM-Android-Mobile-v7-Release
+          path: WASM-Android-Mobile-v7-Release.apk
+          retention-days: 30
