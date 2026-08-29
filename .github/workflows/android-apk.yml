@@ -1,5 +1,9 @@
 name: Build WASM Android APK
 
+concurrency:
+  group: wasm-android-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   workflow_dispatch:
   push:
