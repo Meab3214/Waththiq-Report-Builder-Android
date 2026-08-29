@@ -118,7 +118,8 @@ jobs:
         run: |
           test -f android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
           grep -q 'exportReport(PluginCall call)' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
-          grep -q 'PdfRenderer' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
+          grep -q 'PdfDocument' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
+          grep -q 'enableSlowWholeDocumentDraw' android/app/src/main/java/com/waththiq/reports/MainActivity.java
           grep -q 'signingConfig signingConfigs.release' android/app/build.gradle
           grep -q 'storeFile file("../wasm-release.jks")' android/app/build.gradle
 
@@ -133,12 +134,12 @@ jobs:
           $ANDROID_HOME/build-tools/36.0.0/apksigner verify --verbose android/app/build/outputs/apk/release/app-release.apk
 
       - name: Rename APK
-        run: cp android/app/build/outputs/apk/release/app-release.apk WASM-Android-Mobile-v5-Release.apk
+        run: cp android/app/build/outputs/apk/release/app-release.apk WASM-Android-Mobile-v6-Release.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: WASM-Android-Mobile-v5-Release
-          path: WASM-Android-Mobile-v5-Release.apk
+          name: WASM-Android-Mobile-v6-Release
+          path: WASM-Android-Mobile-v6-Release.apk
           if-no-files-found: error
           retention-days: 30
