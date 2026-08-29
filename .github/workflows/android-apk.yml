@@ -1,11 +1,14 @@
 name: Build WASM Android APK
 
+concurrency:
+  group: wasm-android-main
+  cancel-in-progress: true
+
 on:
   workflow_dispatch:
   push:
     branches:
       - main
-      - feat/wasm-branding
 
 jobs:
   build-apk:
