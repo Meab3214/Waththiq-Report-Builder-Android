@@ -45,12 +45,14 @@ jobs:
         run: |
           python3 scripts/apply_android_mobile_fixes.py
           python3 scripts/fix_build_issues.py --source
+          python3 scripts/apply_mobile_v2.py
           grep -q 'إتمام وحفظ التقرير' src/components/Editor/StepEditorModal.tsx
           grep -q 'WasmNative' src/App.tsx
           grep -q 'Bandar Arishi' src/App.tsx
           grep -q 'إنجازك في تقرير' src/App.tsx
-          grep -q 'تغيير اللون والخط' src/App.tsx
-          grep -q 'الوضع المحلي مفعل' src/components/Editor/AIEducationalAssistant.tsx
+          grep -q 'اللون والخط' src/App.tsx
+          grep -q 'Gemini مباشر' src/components/Editor/AIEducationalAssistant.tsx
+          grep -q 'renderReportCanvas' src/App.tsx
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -73,7 +75,10 @@ jobs:
         run: python3 -m pip install --disable-pip-version-check --no-cache-dir Pillow==11.3.0
 
       - name: Generate Web and PWA branding assets
-        run: python3 scripts/generate_branding_assets.py
+        run: |
+          python3 scripts/generate_branding_assets.py
+          python3 scripts/generate_developer_mark.py
+          test -f public/assets/branding/wasm_developer_mark.png
 
       - name: Verify official branding and responsive splash
         run: python3 scripts/verify_branding.py
@@ -106,12 +111,14 @@ jobs:
       - name: Apply Android native bridge and stable versioning
         run: |
           python3 scripts/apply_android_native.py
+          python3 scripts/apply_android_native_v2.py
           python3 scripts/fix_build_issues.py --android
 
       - name: Verify Android native integration
         run: |
           grep -q 'WasmNativePlugin' android/app/src/main/java/com/waththiq/reports/MainActivity.java
           grep -q '@CapacitorPlugin(name = "WasmNative")' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
+          grep -q 'generateAi(PluginCall call)' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
           grep -q 'signingConfig signingConfigs.release' android/app/build.gradle
           grep -q 'storeFile file("../wasm-release.jks")' android/app/build.gradle
           grep -q 'وَسْم' android/app/src/main/res/values/strings.xml
@@ -127,12 +134,12 @@ jobs:
           $ANDROID_HOME/build-tools/36.0.0/apksigner verify --verbose android/app/build/outputs/apk/release/app-release.apk
 
       - name: Rename APK
-        run: cp android/app/build/outputs/apk/release/app-release.apk WASM-Android-Mobile-Release.apk
+        run: cp android/app/build/outputs/apk/release/app-release.apk WASM-Android-Mobile-v2-Release.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: WASM-Android-Mobile-Release
-          path: WASM-Android-Mobile-Release.apk
+          name: WASM-Android-Mobile-v2-Release
+          path: WASM-Android-Mobile-v2-Release.apk
           if-no-files-found: error
           retention-days: 30
