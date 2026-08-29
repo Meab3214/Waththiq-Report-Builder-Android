@@ -49,6 +49,7 @@ jobs:
           python3 scripts/apply_mobile_v3.py
           python3 scripts/apply_mobile_v4.py
           python3 scripts/apply_mobile_v5.py
+          python3 scripts/fix_mobile_v5_types.py
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
