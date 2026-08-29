@@ -38,6 +38,19 @@ jobs:
       - name: Apply WASM visual identity only
         run: python3 scripts/apply_source_branding.py
 
+      - name: Apply interactive five-step modal flow
+        run: |
+          python3 scripts/apply_modal_flow.py
+          test -f src/components/Editor/StepEditorModal.tsx
+          grep -q 'هوية الجهة' src/App.tsx
+          grep -q 'بيانات التقرير' src/App.tsx
+          grep -q 'المحتوى والأثر' src/App.tsx
+          grep -q 'المؤشرات الرقمية' src/App.tsx
+          grep -q 'الشواهد والاعتماد' src/App.tsx
+          grep -q 'طباعة A4 فورية' src/App.tsx
+          grep -q 'تصدير ملف PDF جاهز للطباعة' src/App.tsx
+          grep -q 'تصدير صورة PNG عالية الدقة' src/App.tsx
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
