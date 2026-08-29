@@ -41,18 +41,20 @@ jobs:
       - name: Apply five-step modal flow
         run: python3 scripts/apply_modal_flow.py
 
-      - name: Apply Android mobile-first fixes
+      - name: Apply Android mobile-first v3 fixes
         run: |
           python3 scripts/apply_android_mobile_fixes.py
           python3 scripts/fix_build_issues.py --source
           python3 scripts/apply_mobile_v2.py
+          python3 scripts/apply_mobile_v3.py
           grep -q 'إتمام وحفظ التقرير' src/components/Editor/StepEditorModal.tsx
-          grep -q 'WasmNative' src/App.tsx
-          grep -q 'Bandar Arishi' src/App.tsx
-          grep -q 'إنجازك في تقرير' src/App.tsx
+          grep -q 'تحرير البيانات' src/App.tsx
+          grep -q 'عودة للتحرير' src/App.tsx
           grep -q 'اللون والخط' src/App.tsx
+          grep -q 'saveNativeDataUrl' src/App.tsx
+          grep -q 'تقرير برنامج أو فعالية' src/App.tsx
           grep -q 'Gemini مباشر' src/components/Editor/AIEducationalAssistant.tsx
-          grep -q 'renderReportCanvas' src/App.tsx
+          grep -q 'setGeminiKey' src/components/Editor/AIEducationalAssistant.tsx
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -108,17 +110,20 @@ jobs:
           base64 --decode signing/wasm-release.jks.b64 > android/wasm-release.jks
           echo "f7a2cacfb48cca4841e711aaa4d1f11bce2aec22285f37fb6654add585e0a5a6  android/wasm-release.jks" | sha256sum -c -
 
-      - name: Apply Android native bridge and stable versioning
+      - name: Apply Android native v3 bridge and stable versioning
         run: |
           python3 scripts/apply_android_native.py
           python3 scripts/apply_android_native_v2.py
+          python3 scripts/apply_android_native_v3.py
           python3 scripts/fix_build_issues.py --android
 
       - name: Verify Android native integration
         run: |
           grep -q 'WasmNativePlugin' android/app/src/main/java/com/waththiq/reports/MainActivity.java
           grep -q '@CapacitorPlugin(name = "WasmNative")' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
-          grep -q 'generateAi(PluginCall call)' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
+          grep -q 'startFile(PluginCall call)' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
+          grep -q 'finishFile(PluginCall call)' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
+          grep -q 'generativelanguage.googleapis.com' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
           grep -q 'signingConfig signingConfigs.release' android/app/build.gradle
           grep -q 'storeFile file("../wasm-release.jks")' android/app/build.gradle
           grep -q 'وَسْم' android/app/src/main/res/values/strings.xml
@@ -134,12 +139,12 @@ jobs:
           $ANDROID_HOME/build-tools/36.0.0/apksigner verify --verbose android/app/build/outputs/apk/release/app-release.apk
 
       - name: Rename APK
-        run: cp android/app/build/outputs/apk/release/app-release.apk WASM-Android-Mobile-v2-Release.apk
+        run: cp android/app/build/outputs/apk/release/app-release.apk WASM-Android-Mobile-v3-Release.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: WASM-Android-Mobile-v2-Release
-          path: WASM-Android-Mobile-v2-Release.apk
+          name: WASM-Android-Mobile-v3-Release
+          path: WASM-Android-Mobile-v3-Release.apk
           if-no-files-found: error
           retention-days: 30
