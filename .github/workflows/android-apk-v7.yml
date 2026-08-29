@@ -1,10 +1,10 @@
-name: Build WASM Android v7
+name: Build WASM Android v8
 on:
   workflow_dispatch:
   push:
     branches: [main]
 concurrency:
-  group: wasm-android-v7
+  group: wasm-android-v8
   cancel-in-progress: true
 jobs:
   build-apk:
@@ -29,6 +29,11 @@ jobs:
           python3 scripts/apply_mobile_v5.py
           python3 scripts/fix_mobile_v5_types.py
           python3 scripts/apply_mobile_v6.py
+          python3 scripts/apply_mobile_v8.py
+          grep -q 'حفظ وتطبيق على التقرير' src/App.tsx
+          grep -q 'renderExactA4DataUrl' src/App.tsx
+          grep -q 'appearanceDraftColor' src/App.tsx
+          grep -q 'height:calc(100dvh - 64px)' src/index.css
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - uses: actions/setup-java@v4
@@ -62,8 +67,9 @@ jobs:
           python3 scripts/apply_android_native_v5.py
           python3 scripts/apply_android_native_v6.py
           python3 scripts/fix_build_issues.py --android
-          grep -q 'exportReport(PluginCall call)' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
-          grep -q 'wasm-ai-service-bandrbk6-3214.vercel.app' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
+          grep -q 'startFile(PluginCall call)' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
+          grep -q 'appendFileChunk(PluginCall call)' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
+          grep -q 'finishFile(PluginCall call)' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
           grep -q 'signingConfig signingConfigs.release' android/app/build.gradle
       - name: Build signed APK
         working-directory: android
@@ -71,9 +77,9 @@ jobs:
       - name: Verify signature
         run: $ANDROID_HOME/build-tools/36.0.0/apksigner verify --verbose android/app/build/outputs/apk/release/app-release.apk
       - name: Package
-        run: cp android/app/build/outputs/apk/release/app-release.apk WASM-Android-Mobile-v7-Release.apk
+        run: cp android/app/build/outputs/apk/release/app-release.apk WASM-Android-Mobile-v8-Release.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: WASM-Android-Mobile-v7-Release
-          path: WASM-Android-Mobile-v7-Release.apk
+          name: WASM-Android-Mobile-v8-Release
+          path: WASM-Android-Mobile-v8-Release.apk
           retention-days: 30
