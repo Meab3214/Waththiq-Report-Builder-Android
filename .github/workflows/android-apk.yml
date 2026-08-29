@@ -44,6 +44,7 @@ jobs:
       - name: Apply Android mobile-first fixes
         run: |
           python3 scripts/apply_android_mobile_fixes.py
+          python3 scripts/fix_build_issues.py --source
           grep -q 'إتمام وحفظ التقرير' src/components/Editor/StepEditorModal.tsx
           grep -q 'WasmNative' src/App.tsx
           grep -q 'Bandar Arishi' src/App.tsx
@@ -103,13 +104,16 @@ jobs:
           echo "f7a2cacfb48cca4841e711aaa4d1f11bce2aec22285f37fb6654add585e0a5a6  android/wasm-release.jks" | sha256sum -c -
 
       - name: Apply Android native bridge and stable versioning
-        run: python3 scripts/apply_android_native.py
+        run: |
+          python3 scripts/apply_android_native.py
+          python3 scripts/fix_build_issues.py --android
 
       - name: Verify Android native integration
         run: |
           grep -q 'WasmNativePlugin' android/app/src/main/java/com/waththiq/reports/MainActivity.java
           grep -q '@CapacitorPlugin(name = "WasmNative")' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
           grep -q 'signingConfig signingConfigs.release' android/app/build.gradle
+          grep -q 'storeFile file("../wasm-release.jks")' android/app/build.gradle
           grep -q 'وَسْم' android/app/src/main/res/values/strings.xml
 
       - name: Build signed release APK
