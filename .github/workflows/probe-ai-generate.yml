@@ -1,0 +1,27 @@
+name: Verify WASM AI generation
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify public Gemini generation
+        run: |
+          set -euo pipefail
+          ok=0
+          for base in https://wasm-ai-prod.vercel.app https://wasm-ai-public.vercel.app; do
+            echo "===== $base"
+            R="$(curl -L --connect-timeout 10 --max-time 70 -sS -w '\nHTTP_STATUS:%{http_code}\nCONTENT_TYPE:%{content_type}\n'               -H 'Content-Type: application/json'               -d '{"title":"برنامج القراءة الواعية","reportType":"تقرير برنامج","targetAudience":"طلاب المرحلة المتوسطة","category":"تعليمي"}'               "$base/api/ai/generate-content" || true)"
+            echo "$R"
+            STATUS="$(printf '%s' "$R" | sed -n 's/^HTTP_STATUS://p' | tail -1)"
+            CTYPE="$(printf '%s' "$R" | sed -n 's/^CONTENT_TYPE://p' | tail -1)"
+            BODY="$(printf '%s' "$R" | sed '/^HTTP_STATUS:/,$d')"
+            if [ "$STATUS" = "200" ] && printf '%s' "$CTYPE" | grep -qi 'application/json' && printf '%s' "$BODY" | grep -q '"success":true' && printf '%s' "$BODY" | grep -q '"generalGoal"'; then
+              echo "AI_OK_BASE=$base"
+              ok=1
+              break
+            fi
+          done
+          [ "$ok" = "1" ]
