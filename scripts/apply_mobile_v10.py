@@ -9,6 +9,7 @@ MODAL=ROOT/'src/components/Editor/StepEditorModal.tsx'
 
 # Final mobile appearance popup: centered card, compact controls, no bottom-sheet behavior.
 s=APP.read_text(encoding='utf-8')
+s=s.replace("import { ReportData, TemplateId } from './types';", "import { ReportData, TemplateId, ThemeColor, ArabicFont } from './types';")
 a=s.find('      {appearanceModalOpen && (')
 b=s.find('      <StepEditorModal ',a)
 if a<0 or b<0:
