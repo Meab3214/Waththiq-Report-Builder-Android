@@ -13,7 +13,7 @@ jobs:
       - name: Probe generation bodies
         run: |
           set +e
-          for BASE in https://wasm-ai-public-v9.vercel.app https://wasm-ai-prod.vercel.app https://wasm-ai-public.vercel.app; do
+          for BASE in https://wasm-ai-sdk-v10.vercel.app https://wasm-ai-public-v9.vercel.app https://wasm-ai-prod.vercel.app https://wasm-ai-public.vercel.app; do
             echo "===== $BASE HEALTH"
             curl -sS -D /tmp/h -o /tmp/b "$BASE/api/health"
             cat /tmp/h | tail -15
