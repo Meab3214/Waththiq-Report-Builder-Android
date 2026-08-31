@@ -1,0 +1,24 @@
+name: Probe WASM AI generation
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+concurrency:
+  group: wasm-ai-generation-probe
+  cancel-in-progress: true
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify production AI JSON
+        run: |
+          set -euo pipefail
+          BASE='https://wasm-ai-prod.vercel.app'
+          echo 'HEALTH:'
+          curl -fsSL "$BASE/api/health" | tee /tmp/health.json
+          grep -q '"ok":true' /tmp/health.json
+          echo
+          echo 'GENERATION:'
+          curl -fsSL --connect-timeout 10 --max-time 90             -H 'Content-Type: application/json'             -d '{"title":"أسبوع الصحة المدرسية","reportType":"برنامج","targetAudience":"الطلاب"}'             "$BASE/api/ai/generate-content" | tee /tmp/ai.json
+          grep -q '"success":true' /tmp/ai.json
+          grep -q '"generalGoal"' /tmp/ai.json
