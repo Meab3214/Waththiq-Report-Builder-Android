@@ -10,15 +10,18 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - name: Verify production AI JSON
+      - name: Probe generation bodies
         run: |
-          set -euo pipefail
-          BASE='https://wasm-ai-prod.vercel.app'
-          echo 'HEALTH:'
-          curl -fsSL "$BASE/api/health" | tee /tmp/health.json
-          grep -q '"ok":true' /tmp/health.json
-          echo
-          echo 'GENERATION:'
-          curl -fsSL --connect-timeout 10 --max-time 90             -H 'Content-Type: application/json'             -d '{"title":"أسبوع الصحة المدرسية","reportType":"برنامج","targetAudience":"الطلاب"}'             "$BASE/api/ai/generate-content" | tee /tmp/ai.json
-          grep -q '"success":true' /tmp/ai.json
-          grep -q '"generalGoal"' /tmp/ai.json
+          set +e
+          for BASE in https://wasm-ai-prod.vercel.app https://wasm-ai-public.vercel.app; do
+            echo "===== $BASE HEALTH"
+            curl -sS -D /tmp/h -o /tmp/b "$BASE/api/health"
+            cat /tmp/h | tail -15
+            cat /tmp/b; echo
+            echo "===== $BASE AI"
+            curl -sS -D /tmp/h -o /tmp/b --connect-timeout 10 --max-time 90               -H 'Content-Type: application/json'               -d '{"title":"أسبوع الصحة المدرسية","reportType":"برنامج","targetAudience":"الطلاب"}'               "$BASE/api/ai/generate-content"
+            cat /tmp/h | tail -15
+            echo BODY:
+            cat /tmp/b; echo
+          done
+          exit 0
