@@ -1,0 +1,22 @@
+name: Probe legacy WASM AI Cloud Run
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe Cloud Run Gemini endpoint
+        run: |
+          set -euo pipefail
+          URL='https://ais-pre-naruvl7phpn7dhi46ynsxx-6197440816.europe-west1.run.app/api/ai/generate-content'
+          R="$(curl -L --connect-timeout 10 --max-time 70 -sS -w '\nHTTP_STATUS:%{http_code}\nCONTENT_TYPE:%{content_type}\n' -H 'Content-Type: application/json' -d '{"title":"برنامج تجريبي","reportType":"تقرير برنامج","targetAudience":"الطلاب","category":"تعليمي"}' "$URL" || true)"
+          echo "$R"
+          STATUS="$(printf '%s' "$R" | sed -n 's/^HTTP_STATUS://p' | tail -1)"
+          CTYPE="$(printf '%s' "$R" | sed -n 's/^CONTENT_TYPE://p' | tail -1)"
+          BODY="$(printf '%s' "$R" | sed '/^HTTP_STATUS:/,$d')"
+          [ "$STATUS" = "200" ]
+          printf '%s' "$CTYPE" | grep -qi 'application/json'
+          printf '%s' "$BODY" | grep -q '"success":true'
+          printf '%s' "$BODY" | grep -q '"generalGoal"'
