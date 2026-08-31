@@ -1,0 +1,24 @@
+name: Probe WASM AI public endpoint
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+concurrency:
+  group: wasm-ai-probe
+  cancel-in-progress: true
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe production domains
+        run: |
+          set +e
+          for u in             https://wasm-ai-public.vercel.app/api/health             https://wasm-ai-public-bandrbk6-3214.vercel.app/api/health             https://wasm-ai-prod.vercel.app/api/health             https://wasm-ai-prod-bandrbk6-3214.vercel.app/api/health; do
+            echo "===== $u"
+            curl -L --connect-timeout 8 --max-time 20 -sS -D /tmp/h -o /tmp/b "$u"
+            code=$?
+            cat /tmp/h | tail -20
+            echo "CURL=$code BODY:"
+            head -c 600 /tmp/b; echo
+          done
+          exit 0
