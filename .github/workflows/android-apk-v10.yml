@@ -1,0 +1,142 @@
+name: Build WASM Android v10
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+concurrency:
+  group: wasm-android-v10
+  cancel-in-progress: true
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore source
+        run: |
+          set -euo pipefail
+          cat bundle.part01.b64 bundle.part02.b64 bundle.part03.b64 | base64 --decode > /tmp/source.tar.xz
+          tar -xJf /tmp/source.tar.xz
+          test -f package.json
+          test -d src
+
+      - name: Apply all WASM mobile fixes
+        run: |
+          set -euo pipefail
+          python3 scripts/apply_source_branding.py
+          python3 scripts/apply_modal_flow.py
+          python3 scripts/apply_android_mobile_fixes.py
+          python3 scripts/fix_build_issues.py --source
+          python3 scripts/apply_mobile_v2.py
+          python3 scripts/apply_mobile_v3.py
+          python3 scripts/apply_mobile_v4.py
+          python3 scripts/apply_mobile_v5.py
+          python3 scripts/fix_mobile_v5_types.py
+          python3 scripts/apply_mobile_v6.py
+          python3 scripts/apply_mobile_v8.py
+          python3 scripts/fix_mobile_v8.py
+          python3 scripts/apply_mobile_v9.py
+          python3 scripts/apply_mobile_v10.py
+          grep -q 'wasm-appearance-dialog' src/App.tsx
+          grep -q 'حفظ وتطبيق على التقرير' src/App.tsx
+          grep -q 'renderExactA4DataUrl' src/App.tsx
+          grep -q 'wasm-step-footer' src/components/Editor/StepEditorModal.tsx
+          grep -q 'wasm-step-overlay' src/components/Editor/StepEditorModal.tsx
+          grep -q 'inset:0 0 88px 0' src/index.css
+          grep -q 'Noto Kufi Arabic' src/types.ts
+          grep -q '"html-to-image"' package.json
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 36
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Install image tooling
+        run: python3 -m pip install --disable-pip-version-check --no-cache-dir Pillow==11.3.0
+
+      - name: Generate branding
+        run: |
+          python3 scripts/generate_branding_assets.py
+          python3 scripts/generate_developer_mark.py
+          python3 scripts/verify_branding.py
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: TypeScript verification
+        run: npm run lint
+
+      - name: Build web
+        run: npm run build
+
+      - name: Create Android wrapper
+        run: |
+          rm -rf android
+          npx cap add android
+          npx cap sync android
+          python3 scripts/generate_branding_assets.py --android-dir android
+          base64 --decode signing/wasm-release.jks.b64 > android/wasm-release.jks
+          echo "f7a2cacfb48cca4841e711aaa4d1f11bce2aec22285f37fb6654add585e0a5a6  android/wasm-release.jks" | sha256sum -c -
+
+      - name: Apply native fixes and update compatibility
+        run: |
+          set -euo pipefail
+          python3 scripts/apply_android_native.py
+          python3 scripts/apply_android_native_v2.py
+          python3 scripts/apply_android_native_v3.py
+          python3 scripts/apply_android_native_v4.py
+          python3 scripts/apply_android_native_v5.py
+          python3 scripts/apply_android_native_v6.py
+          python3 scripts/apply_android_native_v8.py
+          python3 scripts/apply_android_native_v9.py
+          python3 scripts/fix_build_issues.py --android
+          grep -q 'startFile(PluginCall call)' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
+          grep -q 'appendFileChunk(PluginCall call)' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
+          grep -q 'finishFile(PluginCall call)' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
+          grep -q 'wasm-ai-sdk-v10.vercel.app' android/app/src/main/java/com/waththiq/reports/WasmNativePlugin.java
+          grep -q 'WindowCompat.setDecorFitsSystemWindows' android/app/src/main/java/com/waththiq/reports/MainActivity.java
+          grep -q 'signingConfig signingConfigs.release' android/app/build.gradle
+          awk '/versionCode/{print; if ($2+0 < 2000000) exit 1}' android/app/build.gradle
+
+      - name: Build signed APK
+        working-directory: android
+        run: chmod +x gradlew && ./gradlew assembleRelease --stacktrace
+
+      - name: Verify APK identity and signature
+        run: |
+          set -euo pipefail
+          $ANDROID_HOME/build-tools/36.0.0/apksigner verify --verbose --print-certs android/app/build/outputs/apk/release/app-release.apk
+          $ANDROID_HOME/build-tools/36.0.0/aapt2 dump badging android/app/build/outputs/apk/release/app-release.apk | tee /tmp/badging.txt
+          grep -q "package: name='com.waththiq.reports'" /tmp/badging.txt
+
+      - name: Package
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk WASM-Android-Mobile-v10-Release.apk
+          sha256sum WASM-Android-Mobile-v10-Release.apk | tee WASM-Android-Mobile-v10-Release.sha256
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: WASM-Android-Mobile-v10-Release
+          path: |
+            WASM-Android-Mobile-v10-Release.apk
+            WASM-Android-Mobile-v10-Release.sha256
+          retention-days: 30
