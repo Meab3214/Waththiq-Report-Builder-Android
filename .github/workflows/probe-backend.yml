@@ -1,0 +1,27 @@
+name: Probe WASM AI backend
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe public health
+        run: |
+          set -euo pipefail
+          URL='https://wasm-ai-public-v9-bandrbk6-3214.vercel.app/api/health'
+          for i in $(seq 1 18); do
+            echo "Attempt $i"
+            R="$(curl -L --connect-timeout 8 --max-time 20 -sS -w '\nHTTP_STATUS:%{http_code}\nCONTENT_TYPE:%{content_type}\n' "$URL" || true)"
+            echo "$R"
+            STATUS="$(printf '%s' "$R" | sed -n 's/^HTTP_STATUS://p' | tail -1)"
+            CTYPE="$(printf '%s' "$R" | sed -n 's/^CONTENT_TYPE://p' | tail -1)"
+            BODY="$(printf '%s' "$R" | sed '/^HTTP_STATUS:/,$d')"
+            if [ "$STATUS" = "200" ] && printf '%s' "$CTYPE" | grep -qi 'application/json' && printf '%s' "$BODY" | grep -q '"ok":true'; then
+              echo "PUBLIC_OK"
+              exit 0
+            fi
+            sleep 5
+          done
+          exit 1
