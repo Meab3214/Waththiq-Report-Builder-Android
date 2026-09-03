@@ -44,6 +44,7 @@ jobs:
           python3 scripts/apply_mobile_v9.py
           python3 scripts/apply_mobile_v10.py
           python3 scripts/apply_official_template_v11.py
+          rm -rf patches/v11
           grep -q 'wasm-appearance-dialog' src/App.tsx
           grep -q 'حفظ وتطبيق على التقرير' src/App.tsx
           grep -q 'renderExactA4DataUrl' src/App.tsx
