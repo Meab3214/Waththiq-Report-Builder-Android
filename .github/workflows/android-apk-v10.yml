@@ -1,4 +1,4 @@
-name: Build WASM Android v10
+name: Build WASM Android v11
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 concurrency:
-  group: wasm-android-v10
+  group: wasm-android-v11
   cancel-in-progress: true
 
 jobs:
@@ -43,6 +43,7 @@ jobs:
           python3 scripts/fix_mobile_v8.py
           python3 scripts/apply_mobile_v9.py
           python3 scripts/apply_mobile_v10.py
+          python3 scripts/apply_official_template_v11.py
           grep -q 'wasm-appearance-dialog' src/App.tsx
           grep -q 'حفظ وتطبيق على التقرير' src/App.tsx
           grep -q 'renderExactA4DataUrl' src/App.tsx
@@ -51,6 +52,12 @@ jobs:
           grep -q 'inset:0 0 88px 0' src/index.css
           grep -q 'Noto Kufi Arabic' src/types.ts
           grep -q '"html-to-image"' package.json
+          grep -q "label: 'القالب الرسمي'" src/App.tsx
+          grep -q 'renderOfficialA4DataUrl' src/App.tsx
+          grep -q 'optionalLogoUrl' src/types.ts
+          grep -q 'supporterName' src/types.ts
+          grep -q 'official-evidence-4' src/index.css
+          grep -q 'الشواهد والتوثيق الميداني' src/components/templates/Template5InstitutionalMilestone.tsx
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -129,14 +136,14 @@ jobs:
 
       - name: Package
         run: |
-          cp android/app/build/outputs/apk/release/app-release.apk WASM-Android-Mobile-v10-Release.apk
-          sha256sum WASM-Android-Mobile-v10-Release.apk | tee WASM-Android-Mobile-v10-Release.sha256
+          cp android/app/build/outputs/apk/release/app-release.apk WASM-Android-Mobile-v11-Release.apk
+          sha256sum WASM-Android-Mobile-v11-Release.apk | tee WASM-Android-Mobile-v11-Release.sha256
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: WASM-Android-Mobile-v10-Release
+          name: WASM-Android-Mobile-v11-Release
           path: |
-            WASM-Android-Mobile-v10-Release.apk
-            WASM-Android-Mobile-v10-Release.sha256
+            WASM-Android-Mobile-v11-Release.apk
+            WASM-Android-Mobile-v11-Release.sha256
           retention-days: 30
