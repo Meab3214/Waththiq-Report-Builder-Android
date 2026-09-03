@@ -37,8 +37,9 @@ export const Template5InstitutionalMilestone: React.FC<TemplateProps> = ({ data 
   const recommendations = splitLines(data.recommendations);
   const photos = (data.photos || []).filter(photo => Boolean(photo?.url)).slice(0, 4);
 
-  const executorName = (data.executorName || data.signatures?.preparedByName || '').trim();
+  const executorName = (data.executorName || '').trim();
   const supporterName = (data.supporterName || '').trim();
+  const preparedByName = (data.signatures?.preparedByName || '').trim();
   const approverName = (data.approverName || data.signatures?.approvedByName || '').trim();
 
   const metadata = [
@@ -63,7 +64,7 @@ export const Template5InstitutionalMilestone: React.FC<TemplateProps> = ({ data 
     data.title, data.subtitle, data.categoryTag, data.generalGoal, data.detailedGoals,
     data.resultsAndImpact, data.executionMechanism, data.recommendations, data.notes,
     data.directorate, data.schoolName, data.department, data.academicYear, data.semester,
-    executorName, supporterName, approverName, photos.length, metadata.length, metrics.length,
+    executorName, supporterName, preparedByName, approverName, photos.length, metadata.length,
   ].map(v => String(v || '').length).join('|'), [
     data.title, data.subtitle, data.categoryTag, data.generalGoal, data.detailedGoals,
     data.resultsAndImpact, data.executionMechanism, data.recommendations, data.notes,
@@ -89,7 +90,7 @@ export const Template5InstitutionalMilestone: React.FC<TemplateProps> = ({ data 
     return () => { cancelled = true; };
   }, [fitSignature]);
 
-  const hasSignatures = Boolean(executorName || supporterName || approverName);
+  const hasSignatures = Boolean(preparedByName || approverName);
   const hasRecommendations = recommendations.length > 0 || hasValue(data.notes);
   const title = (data.title || '').trim();
 
@@ -239,9 +240,8 @@ export const Template5InstitutionalMilestone: React.FC<TemplateProps> = ({ data 
           )}
 
           {data.showSignatures !== false && hasSignatures && (
-            <section className={`official-signatures ${supporterName ? 'official-signatures-3' : 'official-signatures-2'}`}>
-              {executorName && <div><span>معد/ة التقرير</span><b>{executorName}</b><em>التوقيع: __________________</em></div>}
-              {supporterName && <div><span>مساند/ة</span><b>{supporterName}</b><em>التوقيع: __________________</em></div>}
+            <section className="official-signatures official-signatures-2">
+              {preparedByName && <div><span>معد/ة التقرير</span><b>{preparedByName}</b><em>التوقيع: __________________</em></div>}
               {approverName && <div><span>مدير/ة المدرسة</span><b>{approverName}</b><em>التوقيع: __________________</em></div>}
             </section>
           )}
