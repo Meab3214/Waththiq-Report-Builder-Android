@@ -174,6 +174,19 @@ for path in EDITORS:
                   </div>
                 )}
 
+                {data.templateId === 'template-5-institutional' && (
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">اسم معد/ة التقرير</label>
+                    <input
+                      type="text"
+                      value={data.signatures?.preparedByName ?? ''}
+                      onChange={(e) => updateField('signatures', { ...data.signatures, preparedByName: e.target.value })}
+                      placeholder="يظهر في قسم التوقيعات عند إدخاله"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 focus:border-emerald-700 outline-none text-xs font-semibold"
+                    />
+                  </div>
+                )}
+
 '''
         if manager_marker in s:
             s = s.replace(manager_marker, supporter + manager_marker, 1)
@@ -183,6 +196,7 @@ for path in EDITORS:
     # Make upload limit visible and accurate.
     s = s.replace('رفع الشواهد المصورة (حتى 15 صورة)', 'رفع الشواهد المصورة (حتى {maxPhotos} صور)')
     s = s.replace('Upload Area for up to 15 Photos', 'Upload Area with template-aware limit')
+    s = s.replace('يتم تنظيم وترقيم الصور تلقائياً داخل شبكة التقرير المطبوع حسب مقاس الصفحة.', 'يتم تنظيم الصور تلقائياً داخل شبكة التقرير حسب مساحة صفحة A4.')
 
     path.write_text(s, encoding='utf-8')
 
