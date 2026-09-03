@@ -31,6 +31,13 @@ jobs:
           python3 scripts/apply_mobile_v6.py
           python3 scripts/apply_mobile_v8.py
           python3 scripts/fix_mobile_v8.py
+          python3 scripts/apply_mobile_v9.py
+          python3 scripts/apply_mobile_v10.py
+          python3 scripts/apply_official_template_v11.py
+          grep -q "label: 'القالب الرسمي'" src/App.tsx
+          grep -q 'renderOfficialA4DataUrl' src/App.tsx
+          grep -q 'optionalLogoUrl' src/types.ts
+          grep -q 'official-evidence-4' src/index.css
       - name: Package patched source
         run: |
           tar -czf patched-source.tgz src package.json package-lock.json 2>/dev/null || tar -czf patched-source.tgz src package.json
